@@ -1,3 +1,31 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
+author_list:
+    path: /api/author
+    controller: App\Controller\AuthorController::index
+    methods: [GET]
+author_create:
+    path: /api/author
+    controller: App\Controller\AuthorController::create
+    methods: [ POST ]
+book_list:
+    path: /api/book
+    controller: App\Controller\BookController::index
+    methods: [GET]
+book_create:
+    path: /api/book
+    controller: App\Controller\BookController::create
+    methods: [ POST ]
+book_show:
+    path: /api/{id}/book
+    controller: App\Controller\BookController::show
+    methods: [ GET ]
+book_update:
+    path: /api/{id}/book
+    controller: App\Controller\BookController::update
+    methods: [ PUT ]
+book_delete:
+    path: /api/{id}/book
+    controller: App\Controller\BookController::delete
+    methods: [ DELETE ]
