@@ -1,6 +1,12 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
+api_login_check:
+    path: /api/login
+app_logout:
+    path: /api/logout
+    controller: App\Controller\LogoutController::logout
+    methods: [ GET ]
 author_list:
     path: /api/author
     controller: App\Controller\AuthorController::index
@@ -29,3 +35,7 @@ book_delete:
     path: /api/{id}/book
     controller: App\Controller\BookController::delete
     methods: [ DELETE ]
+register:
+    path: /api/register
+    controller: App\Controller\RegistrationController::register
+    methods: [ POST ]
