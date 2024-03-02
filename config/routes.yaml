@@ -39,3 +39,15 @@ register:
     path: /api/register
     controller: App\Controller\RegistrationController::register
     methods: [ POST ]
+order_create:
+    path: /api/order
+    controller: App\Controller\OrderController::create
+    methods: [ POST ]
+order_show:
+    path: /api/{id}/order
+    controller: App\Controller\OrderController::show
+    methods: [ GET ]
+order_list:
+    path: /api/order
+    controller: App\Controller\OrderController::index
+    methods: [ GET ]

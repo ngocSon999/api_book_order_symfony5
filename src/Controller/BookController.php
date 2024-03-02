@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Author;
 use App\Entity\Book;
 use App\Form\BookType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,7 +20,6 @@ class BookController extends AbstractBaseController
         return $this->respond($books);
     }
 
-
     /**
      * @param Request $request
      * @param EntityManagerInterface $entityManager
@@ -29,24 +27,18 @@ class BookController extends AbstractBaseController
      * @return JsonResponse
      * @throws \Exception
      */
-    public function create(Request $request, EntityManagerInterface $entityManager, ValidatorInterface $validator): JsonResponse
+    public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         $book = new Book();
         $form = $this->createForm(BookType::class, $book);
-        if (!isset($data['authors']) || !is_array($data['authors'])) {
-            return $this->json("Authors data is missing or not in the correct format.");
+        if (empty($data['authors'])) {
+            return $this->respondError("Authors data is missing or not in the correct format.", 422);
         }
+
         $form->submit($data);
 
         if ($form->isValid()) {
-            $authorIds = $data['authors'];
-            foreach ($authorIds as $authorId) {
-                $author = $entityManager->getRepository(Author::class)->find($authorId);
-                if ($author) {
-                    $book->addAuthor($author);
-                }
-            }
             $entityManager->persist($book);
             $entityManager->flush();
 
@@ -73,7 +65,6 @@ class BookController extends AbstractBaseController
         if (!$book) {
             return $this->respondError('book not found!');
         }
-
         $data = json_decode($request->getContent(), true);
         $form = $this->createForm(BookType::class, $book);
 
@@ -84,17 +75,6 @@ class BookController extends AbstractBaseController
         $form->submit($data);
 
         if ($form->isValid()) {
-            foreach ($book->getAuthors() as $author) {
-                $book->removeAuthor($author);
-            }
-
-            $authorIds = $data['authors'];
-            foreach ($authorIds as $authorId) {
-                $author = $entityManager->getRepository(Author::class)->find($authorId);
-                if ($author) {
-                    $book->addAuthor($author);
-                }
-            }
             $entityManager->flush();
 
             return $this->respond($book);

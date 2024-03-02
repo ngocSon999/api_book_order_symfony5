@@ -2,13 +2,17 @@
 
 namespace App\Entity;
 
+use DateTimeImmutable;
 use App\Repository\OrderRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+
 
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
 #[ORM\HasLifecycleCallbacks]
-class Order
+class Order implements \JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -16,110 +20,157 @@ class Order
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $customer_name = null;
+    private ?string $customerName = null;
 
     #[ORM\Column]
-    private ?int $customer_phone = null;
+    private ?int $customerPhone = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $customer_address = null;
+    private ?string $customerAddress = null;
 
     #[ORM\Column]
-    private ?int $total_money = null;
+    private ?int $totalMoney = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $created_at = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updated_at = null;
+    private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $deleted_at = null;
+    private ?\DateTimeImmutable $deletedAt = null;
+
+    #[ORM\OneToMany(mappedBy: 'order', targetEntity: BookOrder::class, cascade: ['persist', 'remove'],orphanRemoval: true)]
+    private Collection $bookOrders;
+
+    public function __construct()
+    {
+        $this->bookOrders = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getCustomerName(): ?string
+    public function getBookOrders(): Collection
     {
-        return $this->customer_name;
+        return $this->bookOrders;
     }
 
-    public function setCustomerName(string $customer_name): static
+    public function addBookOrder(BookOrder $bookOrder): void
     {
-        $this->customer_name = $customer_name;
+        if (!$this->bookOrders->contains($bookOrder)) {
+            $this->bookOrders[] = $bookOrder;
+            $bookOrder->setOrder($this);
+        }
+    }
+
+    public function removeBookOrder(BookOrder $bookOrder): void
+    {
+        $this->bookOrders->removeElement($bookOrder);
+    }
+
+    public function getCustomerName(): ?string
+    {
+        return $this->customerName;
+    }
+
+    public function setCustomerName(string $customerName): static
+    {
+        $this->customerName = $customerName;
 
         return $this;
     }
 
     public function getCustomerPhone(): ?int
     {
-        return $this->customer_phone;
+        return $this->customerPhone;
     }
 
-    public function setCustomerPhone(int $customer_phone): static
+    public function setCustomerPhone(int $customerPhone): static
     {
-        $this->customer_phone = $customer_phone;
+        $this->customerPhone = $customerPhone;
 
         return $this;
     }
 
     public function getCustomerAddress(): ?string
     {
-        return $this->customer_address;
+        return $this->customerAddress;
     }
 
-    public function setCustomerAddress(string $customer_address): static
+    public function setCustomerAddress(string $customerAddress): static
     {
-        $this->customer_address = $customer_address;
+        $this->customerAddress = $customerAddress;
 
         return $this;
     }
 
     public function getTotalMoney(): ?int
     {
-        return $this->total_money;
+        return $this->totalMoney;
     }
 
-    public function setTotalMoney(int $total_money): static
+    public function setTotalMoney(int $totalMoney): static
     {
-        $this->total_money = $total_money;
+        $this->totalMoney = $totalMoney;
 
         return $this;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
     #[ORM\PrePersist]
     public function setCreatedAt(): void
     {
-        $this->created_at = new \DateTimeImmutable();
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
     #[ORM\PrePersist]
     #[ORM\PreUpdate]
     public function setUpdatedAt(): void
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getDeletedAt(): ?\DateTimeImmutable
     {
-        return $this->deleted_at;
+        return $this->deletedAt;
     }
 
     #[ORM\PreDelete]
     public function setDeletedAt(): void
     {
-        $this->deleted_at = new \DateTimeImmutable();
+        $this->deletedAt = new \DateTimeImmutable();
+    }
+
+    public function jsonSerialize(): array
+    {
+        $bookOrders = [];
+        /** @var BookOrder $bookOrder */
+        foreach ($this->bookOrders as $bookOrder) {
+            $bookOrders[] = [
+                'book' => [
+                    'name' => $bookOrder->getBook()->getName(),
+                    'price' => $bookOrder->getBook()->getPrice()
+                ],
+                'quantity' => $bookOrder->getQuantity()
+            ];
+        }
+        return [
+            'id' => $this->id,
+            'customerName' => $this->customerName,
+            'customerAddress' => $this->customerAddress,
+            'bookOrder' => $bookOrders
+        ];
     }
 }

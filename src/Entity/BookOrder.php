@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\BookOrderRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+
 #[ORM\Entity(repositoryClass: BookOrderRepository::class)]
 #[ORM\Table(name: '`book_order`')]
 #[ORM\HasLifecycleCallbacks]
@@ -16,10 +17,7 @@ class BookOrder
     private ?int $id = null;
 
     #[ORM\Column]
-    private ?int $order_id = null;
-
-    #[ORM\Column]
-    private ?int $book_id = null;
+    private ?int $quantity = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $created_at = null;
@@ -30,33 +28,15 @@ class BookOrder
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $deleted_at = null;
 
+    #[ORM\ManyToOne(targetEntity: Order::class, inversedBy: 'bookOrders')]
+    private Order $order;
+
+    #[ORM\ManyToOne(targetEntity: Book::class, cascade: ['persist'], inversedBy: 'bookOrders')]
+    private Book $book;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getOrderId(): ?int
-    {
-        return $this->order_id;
-    }
-
-    public function setOrderId(int $order_id): static
-    {
-        $this->order_id = $order_id;
-
-        return $this;
-    }
-
-    public function getBookId(): ?int
-    {
-        return $this->book_id;
-    }
-
-    public function setBookId(int $book_id): static
-    {
-        $this->book_id = $book_id;
-
-        return $this;
     }
 
     public function getCreatedAt(): ?\DateTimeImmutable
@@ -91,5 +71,55 @@ class BookOrder
     public function setDeletedAt(): void
     {
         $this->deleted_at = new \DateTimeImmutable();
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getQuantity(): ?int
+    {
+        return $this->quantity;
+    }
+
+    /**
+     * @param int|null $quantity
+     */
+    public function setQuantity(?int $quantity): void
+    {
+        $this->quantity = $quantity;
+    }
+
+    /**
+     * @return Order
+     */
+    public function getOrder(): Order
+    {
+        return $this->order;
+    }
+
+    /**
+     * @param Order $order
+     */
+    public function setOrder(Order $order): self
+    {
+        $this->order = $order;
+
+        return $this;
+    }
+
+    /**
+     * @return Book
+     */
+    public function getBook(): Book
+    {
+        return $this->book;
+    }
+
+    /**
+     * @param Book $book
+     */
+    public function setBook(Book $book): void
+    {
+        $this->book = $book;
     }
 }

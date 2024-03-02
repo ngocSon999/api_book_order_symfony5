@@ -20,6 +20,9 @@ class AuthorController extends AbstractBaseController
     {
         $authors = $entityManager->getRepository(Author::class)->findAll();
 
+        foreach ($authors as &$author) {
+
+        }
         return $this->respond($authors);
     }
 

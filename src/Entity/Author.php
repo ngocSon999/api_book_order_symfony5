@@ -4,8 +4,10 @@ namespace App\Entity;
 
 use App\Repository\AuthorRepository;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\ManyToMany;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
@@ -14,7 +16,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 #[ORM\Table(name: '`author`')]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('name')]
-class Author
+class Author implements \JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -43,22 +45,42 @@ class Author
 
     /**
      * @var Collection<int, Book>
+     *     mappedBy anh xa (quan he n-n voi Book anh xa voi truong authors)
      */
-//    #[ManyToMany(targetEntity: Book::class, mappedBy: 'authors')]
-//    private Collection $books;
-//
-//    public function __construct()
-//    {
-//        $this->books = new ArrayCollection();
-//    }
-//
-//    /**
-//     * @return Collection
-//     */
-//    public function getBooks(): Collection
-//    {
-//        return $this->books;
-//    }
+    #[ManyToMany(targetEntity: Book::class, mappedBy: 'authors', cascade: ['persist', 'remove'])]
+    private Collection $books;
+
+    public function __construct()
+    {
+        $this->books = new ArrayCollection();
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getBooks(): Collection
+    {
+        return $this->books;
+    }
+
+    /**
+     * @param Book $book
+     * @return $this
+     */
+    public function addBooks(Book $book): self
+    {
+        if (!$this->books->contains($book)) {
+            $this->books[] = $book;
+            $book->addAuthor($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBooks(Book $book): void
+    {
+        $this->books->removeElement($book);
+    }
 
     public function getId(): ?int
     {
@@ -108,5 +130,32 @@ class Author
     public function setDeletedAt(): void
     {
         $this->deleted_at = new DateTimeImmutable();
+    }
+
+    public function jsonSerialize(): array
+    {
+        $bookData = [];
+
+        /** @var Book $book */
+        foreach ($this->books as $book) {
+            $bookData[] = [
+                'id' => $book->getId(),
+                'name' => $book->getName(),
+                'price' => $book->getPrice(),
+                'quantity' => $book->getQuantity(),
+            ];
+        }
+
+        return [
+            'id' => $this->getId(),
+            'name' => $this->getName(),
+            'created_at' => $this->getCreatedAt() ? $this->getCreatedAt()->format('d/m/Y') : '',
+            'books' => $bookData
+        ];
+    }
+
+    public function __toString()
+    {
+        return $this->name;
     }
 }

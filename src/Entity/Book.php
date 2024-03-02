@@ -6,10 +6,11 @@ use App\Repository\BookRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping\JoinTable;
 use Doctrine\ORM\Mapping\ManyToMany;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+
 
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
@@ -43,24 +44,31 @@ class Book
     private ?int $price = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $created_at = null;
+    #[Groups(['book'])]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updated_at = null;
+    private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $deleted_at = null;
+    private ?\DateTimeImmutable $deletedAt = null;
 
     /**
      * @var Collection<int, Author>
+     * Khi có khai báo thì tự động tạo bảng book_author khi run migrate
+     * inversedBy (nghich dao) quan he nay la noi dat o Auth voi truong tuong ung cua no
+     * (truong hop nay laf truong books tren Auth)
      */
-    #[ManyToMany(targetEntity: Author::class, inversedBy: 'books')]
-    #[JoinTable(name: 'book_author')]
+    #[ManyToMany(targetEntity: Author::class, inversedBy: "books", cascade: ['persist'])]
     private Collection $authors;
+
+    #[ORM\OneToMany(mappedBy: 'book', targetEntity: BookOrder::class, cascade: ['persist', 'remove'])]
+    private Collection $bookOrders;
 
     public function __construct()
     {
         $this->authors = new ArrayCollection();
+        $this->bookOrders = new ArrayCollection();
     }
 
     /**
@@ -71,16 +79,31 @@ class Book
         return $this->authors;
     }
 
-    public function addAuthor(Author $author): void
+    /**
+     * @param Author $author
+     * @return $this
+     */
+    public function addAuthor(Author $author): self
     {
         if (!$this->authors->contains($author)) {
             $this->authors[] = $author;
+            $author->addBooks($this);
         }
+
+        return $this;
     }
 
     public function removeAuthor(Author $author): void
     {
         $this->authors->removeElement($author);
+    }
+
+    /**
+     * @return Collection<int, BookOrder>
+     */
+    public function bookOrders(): Collection
+    {
+        return $this->bookOrders;
     }
 
     public function getId(): ?int
@@ -138,33 +161,63 @@ class Book
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
     #[ORM\PrePersist]
     public function setCreatedAt(): void
     {
-        $this->created_at = new \DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
 
     #[ORM\PrePersist]
     #[ORM\PreUpdate]
     public function setUpdatedAt(): void
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getDeletedAt(): ?\DateTimeImmutable
     {
-        return $this->deleted_at;
+        return $this->deletedAt;
     }
     public function setDeletedAt(): void
     {
-        $this->deleted_at = new \DateTimeImmutable();
+        $this->deletedAt = new \DateTimeImmutable();
+    }
+
+    public function jsonSerialize(): array
+    {
+        $authors = [];
+
+        /** @var Author $author */
+        foreach ($this->getAuthors() as $author) {
+            $authorData = [
+                'id' => $author->getId(),
+                'name' => $author->getName(),
+            ];
+            $authors[] = $authorData;
+            unset($author);
+        }
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'price' => $this->price,
+            'quantity' => $this->quantity,
+            'description' => $this->description,
+            'created_ad' => $this->getCreatedAt() ? $this->getCreatedAt()->format('d/m/Y') : '',
+            'authors' => $authors
+        ];
+    }
+
+    public function __toString()
+    {
+        return $this->name;
     }
 }
