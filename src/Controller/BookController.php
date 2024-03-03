@@ -93,6 +93,7 @@ class BookController extends AbstractBaseController
      */
     public function delete($id, EntityManagerInterface $entityManager): JsonResponse
     {
+        $book = $entityManager->getRepository(Book::class)->find($id);
         if (!$book) {
             return $this->respondError('book not found!');
         }
