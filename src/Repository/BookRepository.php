@@ -45,4 +45,29 @@ class BookRepository extends ServiceEntityRepository
 //            ->getOneOrNullResult()
 //        ;
 //    }
+
+    public function findByName($search = ''): array
+    {
+        $qb = $this->createQueryBuilder('b');
+        if ($search) {
+            $qb->orWhere('b.name LIKE :val')
+                ->orWhere('b.description LIKE :val')
+                ->orWhere('b.price LIKE :val')
+                ->setParameter('val', "%$search%");
+        }
+
+        return $qb
+            ->getQuery()
+            ->getResult()
+            ;
+    }
+
+    public function findOneActive($productId)
+    {
+        return $this->createQueryBuilder('b')
+            ->where('b.id = :val')
+            ->setParameter('val', $productId)
+            ->getQuery()
+            ->getResult();
+    }
 }

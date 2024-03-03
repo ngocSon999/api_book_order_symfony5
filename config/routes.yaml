@@ -35,6 +35,8 @@ book_delete:
     path: /api/{id}/book
     controller: App\Controller\BookController::delete
     methods: [ DELETE ]
+    requirements:
+        id: \d+
 register:
     path: /api/register
     controller: App\Controller\RegistrationController::register

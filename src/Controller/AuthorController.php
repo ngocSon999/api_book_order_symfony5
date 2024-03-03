@@ -46,4 +46,43 @@ class AuthorController extends AbstractBaseController
 
         return $this->getErrorsFromForm($form);
     }
+
+    public function show($id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $author = $entityManager->getRepository(Author::class)->find($id);
+
+        return $this->respond($author);
+    }
+
+    public function update($id, Request $request ,EntityManagerInterface $entityManager): JsonResponse
+    {
+        $author = $entityManager->getRepository(Author::class)->find($id);
+        if (!$author) {
+            return $this->respondError('author not found!');
+        }
+        $data = json_decode($request->getContent(), true);
+        $form = $this->createForm(AuthorType::class, $author);
+        $form->submit($data);
+
+        if ($form->isValid()) {
+            $entityManager->flush();
+
+            return $this->respond($author);
+        }
+
+        return $this->getErrorsFromForm($form);
+    }
+
+
+    public function delete($id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $author = $entityManager->getRepository(Author::class)->find($id);
+        if (!$author) {
+            return $this->respondError('author not found!');
+        }
+        $entityManager->remove($author);
+        $entityManager->flush();
+
+        return $this->respond('delete record successfully!');
+    }
 }

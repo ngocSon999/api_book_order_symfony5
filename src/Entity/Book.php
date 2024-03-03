@@ -12,7 +12,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 
-
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 #[ORM\Table(name: '`book`')]
 #[ORM\HasLifecycleCallbacks]
@@ -37,10 +36,12 @@ class Book
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'quantity cannot be blank')]
+    #[Assert\PositiveOrZero(message: 'Trường số lượng phải lớn hơn hoặc bằng 0')]
     private ?string $quantity = null;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: 'price cannot be blank')]
+    #[Assert\PositiveOrZero(message: 'Trường giá phải lớn hơn hoặc bằng 0')]
     private ?int $price = null;
 
     #[ORM\Column(nullable: true)]
@@ -69,6 +70,8 @@ class Book
     {
         $this->authors = new ArrayCollection();
         $this->bookOrders = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     /**
@@ -164,7 +167,7 @@ class Book
         return $this->createdAt;
     }
 
-    #[ORM\PrePersist]
+//    #[ORM\PrePersist]
     public function setCreatedAt(): void
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -175,8 +178,8 @@ class Book
         return $this->updatedAt;
     }
 
-    #[ORM\PrePersist]
-    #[ORM\PreUpdate]
+//    #[ORM\PrePersist]
+//    #[ORM\PreUpdate]
     public function setUpdatedAt(): void
     {
         $this->updatedAt = new \DateTimeImmutable();

@@ -7,15 +7,18 @@ use App\Form\BookType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 class BookController extends AbstractBaseController
 {
-    public function index(EntityManagerInterface $entityManager): Response
+    public function index(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
-        $books = $entityManager->getRepository(Book::class)->findall();
+        $data = json_decode($request->getContent(), true);
+        $search = $data['search'] ?? '';
+
+        $books = $entityManager->getRepository(Book::class)->findByName($search);
 
         return $this->respond($books);
     }
@@ -90,7 +93,6 @@ class BookController extends AbstractBaseController
      */
     public function delete($id, EntityManagerInterface $entityManager): JsonResponse
     {
-        $book = $entityManager->getRepository(Book::class)->find($id);
         if (!$book) {
             return $this->respondError('book not found!');
         }
